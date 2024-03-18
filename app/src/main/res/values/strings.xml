@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">AndroidERestaurant</string>
+    <string name="title_activity_category">CategoryActivity</string>
+
+    <string-array name="entrees">
+        <item>Entrée 1</item>
+        <item>Entrée 2</item>
+    </string-array>
+
+    <string-array name="plats">
+        <item>Plat 1</item>
+        <item>Plat 2</item>
+    </string-array>
+
+    <string-array name="desserts">
+        <item>Dessert 1</item>
+        <item>Dessert 2</item>
+    </string-array>
+
 </resources>
