@@ -16,5 +16,6 @@
         <item>Dessert 1</item>
         <item>Dessert 2</item>
     </string-array>
+    <string name="title_activity_detail">DetailActivity</string>
 
 </resources>

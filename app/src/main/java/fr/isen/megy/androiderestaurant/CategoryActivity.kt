@@ -1,5 +1,6 @@
 package fr.isen.megy.androiderestaurant
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -31,8 +34,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.volley.Response
 import fr.isen.megy.androiderestaurant.ui.theme.AndroidERestaurantTheme
-
+import org.json.JSONObject
 class CategoryActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,9 +46,21 @@ class CategoryActivity : ComponentActivity() {
                 val category = intent.getStringExtra("category") ?: ""
 
                 // Utiliser la fonction composable pour créer la barre d'applications
-                CategoryScreen(category)
+                CategoryScreen(category) { dishName ->
+                    navigateToDetailActivity(dishName)
+                }
             }
         }
+    }
+    private fun navigateToDetailActivity(dishName: String) {
+        val intent = Intent(this, DetailActivity::class.java).apply {
+            putExtra("dishName", dishName)
+        }
+        startActivity(intent)
+    }
+    fun startActivity(){
+        val intent = Intent(this, DetailActivity::class.java)
+        startActivity(intent)
     }
 }
 
@@ -54,7 +70,7 @@ class CategoryActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryScreen(category: String) {
+fun CategoryScreen(category: String, onCategoryClick: (String) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -68,17 +84,16 @@ fun CategoryScreen(category: String) {
             )
         }
     ) {
-        innerPadding ->
-        ScrollContent(innerPadding,category)
-        Text(category)
+            innerPadding ->
+        ScrollContent(innerPadding,category, onCategoryClick )
+
 
     }
 }
 
 
 @Composable
-fun ScrollContent(innerPadding: PaddingValues , category: String) {
-
+fun ScrollContent(innerPadding: PaddingValues, category: String, onCategoryClick: (String) -> Unit) {
     val itemsList = when (category) {
         "Entrées" -> stringArrayResource(R.array.entrees)
         "Plats" -> stringArrayResource(R.array.plats)
@@ -87,15 +102,22 @@ fun ScrollContent(innerPadding: PaddingValues , category: String) {
     }
 
     LazyColumn(modifier = Modifier.padding(innerPadding)) {
-        items(itemsList) { item ->
-            Text(item)
+        items(itemsList) { dishName ->
+            TextButton(
+                text = dishName,
+                onClick = { onCategoryClick(dishName) } // Appel de la fonction onCategoryClick fournie par l'activité
+            )
         }
     }
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryTopAppBar(category: String) {
-    TopAppBar(title = { Text(category) })
+fun TextButton(text: String, onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick, // Utilisez simplement la fonction onClick fournie
+        modifier = Modifier.padding(vertical = 8.dp)
+    ) {
+        Text(text = text, style = TextStyle(color = Color.Black))
+    }
 }
