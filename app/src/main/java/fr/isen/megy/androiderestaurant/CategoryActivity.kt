@@ -52,6 +52,7 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import fr.isen.megy.androiderestaurant.model.Dishes
+import fr.isen.megy.androiderestaurant.model.Item
 import fr.isen.megy.androiderestaurant.model.Items
 import fr.isen.megy.androiderestaurant.ui.theme.AndroidERestaurantTheme
 import org.json.JSONObject
@@ -107,9 +108,9 @@ class CategoryActivity : ComponentActivity() {
 
 
 
-    private fun navigateToDetailActivity(dishName: String) {
+    private fun navigateToDetailActivity(dishName: Items) {
         val intent = Intent(this, DetailActivity::class.java).apply {
-            putExtra("dishName", dishName)
+            putExtra("DISH", dishName)
         }
         startActivity(intent)
     }
@@ -122,7 +123,7 @@ class CategoryActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryScreen(dishes: List<Items>,category: String, onCategoryClick: (String) -> Unit) {
+fun CategoryScreen(dishes: List<Items>,category: String, onItemClick: (Items) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -137,7 +138,7 @@ fun CategoryScreen(dishes: List<Items>,category: String, onCategoryClick: (Strin
         }
     ) {
             innerPadding ->
-        ScrollContent(innerPadding,dishes, onCategoryClick )
+        ScrollContent(innerPadding,dishes, onItemClick )
 
 
     }
@@ -145,7 +146,7 @@ fun CategoryScreen(dishes: List<Items>,category: String, onCategoryClick: (Strin
 
 
 @Composable
-fun ScrollContent(innerPadding: PaddingValues, dishList: List<Items>, onCategoryClick: (String) -> Unit) {
+fun ScrollContent(innerPadding: PaddingValues, dishList: List<Items>, onItemClick: (Items) -> Unit) {
     LazyColumn(modifier = Modifier.padding(innerPadding)) {
         items(dishList) { dish ->
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -154,15 +155,18 @@ fun ScrollContent(innerPadding: PaddingValues, dishList: List<Items>, onCategory
                         .fillMaxWidth()
                         .padding(8.dp)
                 ) {
-                    Text(
-                        text = dish.nameFr ?: "No name", // Utilize the dish name
-                        color = Color.Black,
-                        modifier = Modifier
-                            .padding(bottom = 4.dp)
-                            .fillMaxWidth()
-                            .wrapContentWidth(Alignment.CenterHorizontally),
-                        textAlign = TextAlign.Center
-                    )
+                    TextButton(
+                        onClick = { onItemClick(dish) },
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = dish.nameFr ?: "No name",
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color.Black
+                        )
+                    }
                     Image(
 
                         painter = rememberImagePainter(

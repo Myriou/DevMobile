@@ -14,6 +14,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import fr.isen.megy.androiderestaurant.model.Items
 import fr.isen.megy.androiderestaurant.ui.theme.AndroidERestaurantTheme
 
 class DetailActivity : ComponentActivity() {
@@ -26,10 +27,10 @@ class DetailActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val dishName = intent.getStringExtra("dishName") ?: ""
+                    val item : Items = intent.getSerializableExtra("DISH") as Items
 
                     // Utiliser la fonction composable pour créer la barre d'applications
-                    DishScreen(dishName)
+                    DishScreen(item)
                 }
             }
         }
@@ -43,7 +44,7 @@ class DetailActivity : ComponentActivity() {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DishScreen(dishName: String) {
+fun DishScreen(dish: Items) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -52,7 +53,7 @@ fun DishScreen(dishName: String) {
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
-                    Text(dishName)
+                    Text(dish.nameFr ?: "Dish")
                 }
             )
         }
