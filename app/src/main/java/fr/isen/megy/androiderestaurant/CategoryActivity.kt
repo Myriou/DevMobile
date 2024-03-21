@@ -2,6 +2,8 @@ package fr.isen.megy.androiderestaurant
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -25,33 +27,102 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
+import com.android.volley.Request
+import com.android.volley.RequestQueue
 import com.android.volley.Response
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
+import com.google.gson.Gson
+import fr.isen.megy.androiderestaurant.model.Dishes
+import fr.isen.megy.androiderestaurant.model.Items
 import fr.isen.megy.androiderestaurant.ui.theme.AndroidERestaurantTheme
 import org.json.JSONObject
 class CategoryActivity : ComponentActivity() {
+    var mutableDataList by mutableStateOf(emptyList<Items>())
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val category = intent.getStringExtra("category") ?: ""
+            val apiUrl = "http://test.api.catering.bluecodegames.com/menu"
+
+
+
+            val queue: RequestQueue = Volley.newRequestQueue(applicationContext)
+
+            val itemList = ArrayList<Items>()
+
+
+            // Fetch dishes from server
+            val url = "http://test.api.catering.bluecodegames.com/menu"
+            val requestBody = JSONObject().apply {
+                put("id_shop", "1")
+            }.toString()
+
+            val stringRequest = object : StringRequest(
+                Request.Method.POST, url,
+                Response.Listener<String>
+                { response ->
+                    try {
+
+                        val menuResponse = Gson().fromJson(response, Dishes::class.java)
+                        val categoryChoisi = menuResponse.data.find { it.nameFr== category}
+
+                        val items = categoryChoisi?.items
+
+
+                        val itemsList = items?.map { Items(it.id, it.nameFr, it.idCategory, it.categNameFr, it.images, it.ingredients, it.prices) }
+                        mutableDataList = itemsList ?: emptyList()
+//
+                        Log.d("GSON", "test outside: $mutableDataList")
+
+                    }catch (e: Exception){
+                        Log.e("DISHES", "Error: ${e.toString()}")
+
+                    }
+//
+
+                },
+                Response.ErrorListener { error ->
+                    Log.e("DISHES", "Error: ${error.toString()}")
+                }
+            ) {
+                override fun getBody(): ByteArray = requestBody.toByteArray()
+                override fun getBodyContentType(): String = "application/json; charset=utf-8"
+            }
+
+            queue.add(stringRequest)
+
             AndroidERestaurantTheme {
                 // Récupérer le nom de la catégorie passé en argument
-                val category = intent.getStringExtra("category") ?: ""
+
 
                 // Utiliser la fonction composable pour créer la barre d'applications
-                CategoryScreen(category) { dishName ->
+                CategoryScreen(mutableDataList,category) { dishName ->
                     navigateToDetailActivity(dishName)
                 }
             }
         }
+
     }
+
+
+
+
     private fun navigateToDetailActivity(dishName: String) {
         val intent = Intent(this, DetailActivity::class.java).apply {
             putExtra("dishName", dishName)
@@ -70,7 +141,7 @@ class CategoryActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryScreen(category: String, onCategoryClick: (String) -> Unit) {
+fun CategoryScreen(dishes: List<Items>,category: String, onCategoryClick: (String) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -85,7 +156,7 @@ fun CategoryScreen(category: String, onCategoryClick: (String) -> Unit) {
         }
     ) {
             innerPadding ->
-        ScrollContent(innerPadding,category, onCategoryClick )
+        ScrollContent(innerPadding,dishes, onCategoryClick )
 
 
     }
@@ -93,25 +164,30 @@ fun CategoryScreen(category: String, onCategoryClick: (String) -> Unit) {
 
 
 @Composable
-fun ScrollContent(innerPadding: PaddingValues, category: String, onCategoryClick: (String) -> Unit) {
-    val itemsList = when (category) {
-        "Entrées" -> stringArrayResource(R.array.entrees)
-        "Plats" -> stringArrayResource(R.array.plats)
-        "Desserts" -> stringArrayResource(R.array.desserts)
-        else -> emptyArray()
-    }
-
+fun ScrollContent(innerPadding: PaddingValues, dishList: List<Items>, onCategoryClick: (String) -> Unit) {
     LazyColumn(modifier = Modifier.padding(innerPadding)) {
-        items(itemsList) { dishName ->
+        items(dishList) { dish ->
             TextButton(
-                text = dishName,
-                onClick = { onCategoryClick(dishName) } // Appel de la fonction onCategoryClick fournie par l'activité
+                text = dish.nameFr ?: "No name", // Utilize the dish name
+                onClick = { dish.nameFr?.let { onCategoryClick(it) } } // Call the provided onClick function
             )
+            dish.images.firstOrNull()?.let { imageUrl ->
+                // Load and display the image using Coil
+                Image(
+                    painter = rememberImagePainter(
+                        data = imageUrl,
+                        builder = {
+                            crossfade(true) // Enable crossfade animation
+                            placeholder(R.drawable.comingsoon) // Placeholder drawable while loading
+                        }
+                    ),
+                    contentDescription = "Dish Image", // Content description for accessibility
+                    modifier = Modifier.fillMaxSize().padding(vertical = 4.dp) // Adjust the size and padding
+                )
+            }
         }
     }
 }
-
-
 @Composable
 fun TextButton(text: String, onClick: () -> Unit) {
     TextButton(
