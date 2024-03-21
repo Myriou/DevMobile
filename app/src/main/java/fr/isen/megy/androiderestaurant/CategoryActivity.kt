@@ -71,7 +71,7 @@ class CategoryActivity : ComponentActivity() {
             }
         }
     }private fun fetchDishData(category: String) {
-        val apiUrl = "http://test.api.catering.bluecodegames.com/menu"
+
         val queue: RequestQueue = Volley.newRequestQueue(applicationContext)
 
         val url = "http://test.api.catering.bluecodegames.com/menu"
@@ -84,8 +84,8 @@ class CategoryActivity : ComponentActivity() {
             Response.Listener<String> { response ->
                 try {
                     val menuResponse = Gson().fromJson(response, Dishes::class.java)
-                    val categoryChoisi = menuResponse.data.find { it.nameFr == category }
-                    val items = categoryChoisi?.items
+                    val categoryDish = menuResponse.data.find { it.nameFr == category }
+                    val items = categoryDish?.items
                     val itemsList = items?.map { Items(it.id, it.nameFr, it.idCategory, it.categNameFr, it.images, it.ingredients, it.prices) }
                     mutableDataList = itemsList ?: emptyList()
                     Log.d("GSON", "test outside: $mutableDataList")
@@ -169,8 +169,15 @@ fun ScrollContent(innerPadding: PaddingValues, dishList: List<Items>, onCategory
                             data = dish.images.firstOrNull(),
                             builder = {
                                 crossfade(true) // Enable crossfade animation
-                                placeholder(R.drawable.comingsoon) // Placeholder drawable while loading
+                                placeholder(R.drawable.comingsoon)
+                                dish.images.drop(1).forEach {
+                                    if (it.isNotEmpty()) {
+                                        data(it)
+                                        return@forEach
+                                    }
+                                }// Placeholder drawable while loading
                                 error(R.drawable.comingsoon)
+
                             }
                         ),
                         contentDescription = "Dish Image", // Content description for accessibility
