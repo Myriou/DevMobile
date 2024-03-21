@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,6 +39,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -167,27 +170,51 @@ fun CategoryScreen(dishes: List<Items>,category: String, onCategoryClick: (Strin
 fun ScrollContent(innerPadding: PaddingValues, dishList: List<Items>, onCategoryClick: (String) -> Unit) {
     LazyColumn(modifier = Modifier.padding(innerPadding)) {
         items(dishList) { dish ->
-            TextButton(
-                text = dish.nameFr ?: "No name", // Utilize the dish name
-                onClick = { dish.nameFr?.let { onCategoryClick(it) } } // Call the provided onClick function
-            )
-            dish.images.firstOrNull()?.let { imageUrl ->
-                // Load and display the image using Coil
-                Image(
-                    painter = rememberImagePainter(
-                        data = imageUrl,
-                        builder = {
-                            crossfade(true) // Enable crossfade animation
-                            placeholder(R.drawable.comingsoon) // Placeholder drawable while loading
-                        }
-                    ),
-                    contentDescription = "Dish Image", // Content description for accessibility
-                    modifier = Modifier.fillMaxSize().padding(vertical = 4.dp) // Adjust the size and padding
-                )
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = dish.nameFr ?: "No name", // Utilize the dish name
+                        color = Color.Black,
+                        modifier = Modifier
+                            .padding(bottom = 4.dp)
+                            .fillMaxWidth()
+                            .wrapContentWidth(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
+                    )
+                    Image(
+
+                        painter = rememberImagePainter(
+                            data = dish.images.firstOrNull(),
+                            builder = {
+                                crossfade(true) // Enable crossfade animation
+                                placeholder(R.drawable.comingsoon) // Placeholder drawable while loading
+                                error(R.drawable.comingsoon)
+                            }
+                        ),
+                        contentDescription = "Dish Image", // Content description for accessibility
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp) // Adjust the size and padding
+                    )
+                    Text(
+                        text = (dish.prices.firstOrNull()?.price + "$") ?: "Price not available", // Utilize the dish price
+                        color = Color.Black,
+                        modifier = Modifier
+                            .padding(bottom = 4.dp)
+                            .fillMaxWidth()
+                            .wrapContentWidth(Alignment.CenterHorizontally),
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
 }
+
 @Composable
 fun TextButton(text: String, onClick: () -> Unit) {
     TextButton(
