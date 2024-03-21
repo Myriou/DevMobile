@@ -57,70 +57,51 @@ import fr.isen.megy.androiderestaurant.ui.theme.AndroidERestaurantTheme
 import org.json.JSONObject
 class CategoryActivity : ComponentActivity() {
     var mutableDataList by mutableStateOf(emptyList<Items>())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             val category = intent.getStringExtra("category") ?: ""
-            val apiUrl = "http://test.api.catering.bluecodegames.com/menu"
-
-
-
-            val queue: RequestQueue = Volley.newRequestQueue(applicationContext)
-
-            val itemList = ArrayList<Items>()
-
-
-            // Fetch dishes from server
-            val url = "http://test.api.catering.bluecodegames.com/menu"
-            val requestBody = JSONObject().apply {
-                put("id_shop", "1")
-            }.toString()
-
-            val stringRequest = object : StringRequest(
-                Request.Method.POST, url,
-                Response.Listener<String>
-                { response ->
-                    try {
-
-                        val menuResponse = Gson().fromJson(response, Dishes::class.java)
-                        val categoryChoisi = menuResponse.data.find { it.nameFr== category}
-
-                        val items = categoryChoisi?.items
-
-
-                        val itemsList = items?.map { Items(it.id, it.nameFr, it.idCategory, it.categNameFr, it.images, it.ingredients, it.prices) }
-                        mutableDataList = itemsList ?: emptyList()
-//
-                        Log.d("GSON", "test outside: $mutableDataList")
-
-                    }catch (e: Exception){
-                        Log.e("DISHES", "Error: ${e.toString()}")
-
-                    }
-//
-
-                },
-                Response.ErrorListener { error ->
-                    Log.e("DISHES", "Error: ${error.toString()}")
-                }
-            ) {
-                override fun getBody(): ByteArray = requestBody.toByteArray()
-                override fun getBodyContentType(): String = "application/json; charset=utf-8"
-            }
-
-            queue.add(stringRequest)
-
+            fetchDishData(category)
             AndroidERestaurantTheme {
-                // Récupérer le nom de la catégorie passé en argument
-
-
                 // Utiliser la fonction composable pour créer la barre d'applications
-                CategoryScreen(mutableDataList,category) { dishName ->
+                CategoryScreen(mutableDataList, category) { dishName ->
                     navigateToDetailActivity(dishName)
                 }
             }
         }
+    }private fun fetchDishData(category: String) {
+        val apiUrl = "http://test.api.catering.bluecodegames.com/menu"
+        val queue: RequestQueue = Volley.newRequestQueue(applicationContext)
 
+        val url = "http://test.api.catering.bluecodegames.com/menu"
+        val requestBody = JSONObject().apply {
+            put("id_shop", "1")
+        }.toString()
+
+        val stringRequest = object : StringRequest(
+            Request.Method.POST, url,
+            Response.Listener<String> { response ->
+                try {
+                    val menuResponse = Gson().fromJson(response, Dishes::class.java)
+                    val categoryChoisi = menuResponse.data.find { it.nameFr == category }
+                    val items = categoryChoisi?.items
+                    val itemsList = items?.map { Items(it.id, it.nameFr, it.idCategory, it.categNameFr, it.images, it.ingredients, it.prices) }
+                    mutableDataList = itemsList ?: emptyList()
+                    Log.d("GSON", "test outside: $mutableDataList")
+                } catch (e: Exception) {
+                    Log.e("DISHES", "Error: ${e.toString()}")
+                }
+            },
+            Response.ErrorListener { error ->
+                Log.e("DISHES", "Error: ${error.toString()}")
+            }
+        ) {
+            override fun getBody(): ByteArray = requestBody.toByteArray()
+            override fun getBodyContentType(): String = "application/json; charset=utf-8"
+        }
+
+        queue.add(stringRequest)
     }
 
 
@@ -132,10 +113,7 @@ class CategoryActivity : ComponentActivity() {
         }
         startActivity(intent)
     }
-    fun startActivity(){
-        val intent = Intent(this, DetailActivity::class.java)
-        startActivity(intent)
-    }
+
 }
 
 
