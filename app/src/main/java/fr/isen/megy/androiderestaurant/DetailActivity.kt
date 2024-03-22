@@ -11,12 +11,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -25,6 +27,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -79,15 +86,20 @@ fun DishScreen(dish: Items) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun DishDetails(innerPadding: PaddingValues,dish: Items) {
+fun DishDetails(innerPadding: PaddingValues, dish: Items) {
+
+
+    var quantity by remember { mutableStateOf(1) }
+    val pricePerDish = dish.prices.first().price?.toFloat()
+    val totalPrice = pricePerDish?.times(quantity)
+
     Column(
         modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-       Carousel(dish)
-
+        Carousel(dish)
 
         Text(
             text = dish.nameFr ?: "No name",
@@ -95,26 +107,56 @@ fun DishDetails(innerPadding: PaddingValues,dish: Items) {
             fontWeight = FontWeight.Bold
         )
 
-
         FlowRow {
             dish.ingredients.forEach { ingName ->
                 Text(
                     text = ingName.nameFr ?: "error",
-                    modifier = Modifier
-                        .padding(8.dp)
-
-
-
+                    modifier = Modifier.padding(8.dp)
                 )
             }
         }
-        Text(
-            text = ("Prix : " + dish.prices.firstOrNull()?.price + "$") ?: "Price not available",
-            fontSize = 20.sp
-        )
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            QuantitySelector(
+                quantity = quantity,
+                onQuantityChange = { newQuantity ->
+                    if (newQuantity < 0)
+                        quantity = 0
+                    else
+                        quantity = newQuantity
+                }
+            )
+        }
 
 
+        // Prix comme bouton "Ajouter au panier"
+            Button(
+                onClick = { /* Action à effectuer lorsque le bouton est cliqué */ },
+                modifier = Modifier.fillMaxWidth()
+            )      {
+                Text(text = "Ajouter au panier - $totalPrice $")
+            }
 
+
+        }
+    }
+
+
+@Composable
+fun QuantitySelector(quantity: Int, onQuantityChange: (Int) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Button(onClick = { onQuantityChange(quantity - 1) }) {
+            Text(text = "-")
+        }
+
+        Text(text = "  $quantity  ")
+
+        Button(onClick = { onQuantityChange(quantity + 1) }) {
+            Text(text = "+")
+        }
     }
 }
 
@@ -145,7 +187,7 @@ fun Carousel (dish: Items){
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(300.dp)
             )
         }
 
