@@ -1,5 +1,6 @@
 package fr.isen.megy.androiderestaurant
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -21,6 +22,8 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -69,7 +72,7 @@ class CategoryActivity : ComponentActivity() {
             fetchDishData(category)
             AndroidERestaurantTheme {
                 // Utiliser la fonction composable pour créer la barre d'applications
-                CategoryScreen(mutableDataList, category) { dishName ->
+                CategoryScreen(this,mutableDataList, category) { dishName ->
                     navigateToDetailActivity(dishName)
                 }
             }
@@ -134,7 +137,7 @@ class CategoryActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryScreen(dishes: List<Items>,category: String, onItemClick: (Items) -> Unit) {
+fun CategoryScreen(context : Context, dishes: List<Items>, category: String, onItemClick: (Items) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -143,7 +146,18 @@ fun CategoryScreen(dishes: List<Items>,category: String, onItemClick: (Items) ->
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
-                    Text("Garfield's - " +category)
+                    Text(("Garfield's - $category"))
+                },
+                actions = {
+                    IconButton(onClick = {
+                        // Rediriger l'utilisateur vers l'écran du panier
+                        context.startActivity(Intent(context, CartActivity::class.java))
+                    }) {
+                        Image(
+                            painter = painterResource(id = R.drawable.cart),
+                            contentDescription = "Panier"
+                        )
+                    }
                 }
             )
         }

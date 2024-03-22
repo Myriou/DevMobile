@@ -2,6 +2,7 @@ package fr.isen.megy.androiderestaurant
 
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -24,6 +25,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -38,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -82,6 +86,8 @@ class DetailActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DishScreen(dish: Items, context: Context) {
+
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -91,6 +97,17 @@ fun DishScreen(dish: Items, context: Context) {
                 ),
                 title = {
                     Text(("Garfield's - " + (dish.nameFr)) ?: "Dish")
+                },
+                actions = {
+                    IconButton(onClick = {
+                        // Rediriger l'utilisateur vers l'écran du panier
+                        context.startActivity(Intent(context, CartActivity::class.java))
+                    }) {
+                        Image(
+                            painter = painterResource(id = R.drawable.cart),
+                            contentDescription = "Panier"
+                        )
+                    }
                 }
             )
         }
@@ -145,8 +162,7 @@ fun DishDetails(innerPadding: PaddingValues, dish: Items, context: Context) {
             )
         }
 
-       val vue = LocalView.current
-        // Prix comme bouton "Ajouter au panier"
+
             Button(
                 onClick = {
                     addToCart(dish.nameFr ?: "No name", quantity, totalPrice ?: 0f, context)
@@ -174,7 +190,25 @@ fun addToCart(name: String, quantity: Int, totalPrice: Float, context: Context) 
     val cartItemList = loadCartItems(context) // Charger la liste actuelle du panier
     cartItemList.add(cartItem)
     saveCartItems(cartItemList, context) // Enregistrer la liste mise à jour du panier
+    // Compter le nombre total d'articles dans le panier
+    val itemCount = cartItemList.sumBy { it.quantity }
+
+    // Mettre à jour le nombre d'articles dans les préférences utilisateur
+    updateCartItemCount(context, itemCount)
+
+    Log.d("SaveCartItems", "addToCart: Item count updated to $itemCount")
 }
+
+fun updateCartItemCount(context: Context, itemCount: Int) {
+    val sharedPreferences = context.getSharedPreferences("CartPrefs", Context.MODE_PRIVATE)
+    with(sharedPreferences.edit()) {
+        putInt("cartItemCount", itemCount)
+        apply()
+    }
+}
+
+
+
 
 fun loadCartItems(context: Context): MutableList<CartItem> {
     val cartFile = File(context.filesDir, CART_FILE_NAME)
