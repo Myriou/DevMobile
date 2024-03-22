@@ -1,6 +1,10 @@
 package fr.isen.megy.androiderestaurant
 
+import android.app.AlertDialog
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -33,12 +37,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
+import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import fr.isen.megy.androiderestaurant.model.CartItem
 import fr.isen.megy.androiderestaurant.model.Items
 import fr.isen.megy.androiderestaurant.ui.theme.AndroidERestaurantTheme
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.io.File
+import java.io.IOException
 
 class DetailActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +67,7 @@ class DetailActivity : ComponentActivity() {
                     val item : Items = intent.getSerializableExtra("DISH") as Items
 
                     // Utiliser la fonction composable pour créer la barre d'applications
-                    DishScreen(item)
+                    DishScreen(item, this@DetailActivity)
                 }
             }
         }
@@ -67,7 +81,7 @@ class DetailActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DishScreen(dish: Items) {
+fun DishScreen(dish: Items, context: Context) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -82,13 +96,13 @@ fun DishScreen(dish: Items) {
         }
     ) {
             innerPadding ->
-        DishDetails(innerPadding, dish)
+        DishDetails(innerPadding, dish, context)
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun DishDetails(innerPadding: PaddingValues, dish: Items) {
+fun DishDetails(innerPadding: PaddingValues, dish: Items, context: Context) {
 
 
     var quantity by remember { mutableStateOf(1) }
@@ -131,10 +145,17 @@ fun DishDetails(innerPadding: PaddingValues, dish: Items) {
             )
         }
 
-
+       val vue = LocalView.current
         // Prix comme bouton "Ajouter au panier"
             Button(
-                onClick = { /* Action à effectuer lorsque le bouton est cliqué */ },
+                onClick = {
+                    addToCart(dish.nameFr ?: "No name", quantity, totalPrice ?: 0f, context)
+                    AlertDialog.Builder(context)
+                    .setTitle("Plat ajouté au panier")
+                    .setMessage("Le plat a été ajouté à votre panier.")
+                    .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                    .show()
+                          },
                 modifier = Modifier.fillMaxWidth()
             )      {
                 Text(text = "Ajouter au panier - $totalPrice $")
@@ -143,6 +164,45 @@ fun DishDetails(innerPadding: PaddingValues, dish: Items) {
 
         }
     }
+
+// Ajouter un élément au panier et le stocker au format JSON dans un fichier
+
+const val CART_FILE_NAME = "panier.json"
+
+fun addToCart(name: String, quantity: Int, totalPrice: Float, context: Context) {
+    val cartItem = CartItem(name, quantity, totalPrice)
+    val cartItemList = loadCartItems(context) // Charger la liste actuelle du panier
+    cartItemList.add(cartItem)
+    saveCartItems(cartItemList, context) // Enregistrer la liste mise à jour du panier
+}
+
+fun loadCartItems(context: Context): MutableList<CartItem> {
+    val cartFile = File(context.filesDir, CART_FILE_NAME)
+    if (!cartFile.exists() || cartFile.length() == 0L) {
+        Log.d("LoadCartItems", "Le fichier du panier n'existe pas ou est vide")
+        return mutableListOf()
+    }
+    val json = cartFile.readText()
+    Log.d("LoadCartItems", "Contenu du fichier JSON: $json")
+    Log.d("LoadCartItems", "Cart file path: ${cartFile.absolutePath}")
+
+    val cartItemsArray = Gson().fromJson(json, Array<CartItem>::class.java)
+    val cartItemList = cartItemsArray.toMutableList()
+    Log.d("LoadCartItems", "Liste des éléments du panier chargée avec succès")
+    return cartItemList
+}
+
+
+fun saveCartItems(cartItems: List<CartItem>, context: Context) {
+    Log.d("SaveCartItems", "Enregistrement de la liste des éléments du panier")
+    val json = Gson().toJson(cartItems)
+
+    val cartFile = File(context.filesDir, CART_FILE_NAME)
+    cartFile.writeText(json)
+    Log.d("SaveCartItems", "Liste des éléments du panier enregistrée avec succès: $json")
+}
+
+
 
 
 @Composable
@@ -194,3 +254,4 @@ fun Carousel (dish: Items){
 
     }
 }
+
