@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.text.TextStyle
@@ -43,7 +44,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
+import coil.request.ImageRequest
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
@@ -71,8 +74,8 @@ class CategoryActivity : ComponentActivity() {
                 }
             }
         }
-    }private fun fetchDishData(category: String) {
-
+    }
+    private fun fetchDishData(category: String) {
         val queue: RequestQueue = Volley.newRequestQueue(applicationContext)
 
         val url = "http://test.api.catering.bluecodegames.com/menu"
@@ -87,7 +90,14 @@ class CategoryActivity : ComponentActivity() {
                     val menuResponse = Gson().fromJson(response, Dishes::class.java)
                     val categoryDish = menuResponse.data.find { it.nameFr == category }
                     val items = categoryDish?.items
+
+
+
+
                     val itemsList = items?.map { Items(it.id, it.nameFr, it.idCategory, it.categNameFr, it.images, it.ingredients, it.prices) }
+
+//
+
                     mutableDataList = itemsList ?: emptyList()
                     Log.d("GSON", "test outside: $mutableDataList")
                 } catch (e: Exception) {
@@ -104,6 +114,7 @@ class CategoryActivity : ComponentActivity() {
 
         queue.add(stringRequest)
     }
+
 
 
 
@@ -132,7 +143,7 @@ fun CategoryScreen(dishes: List<Items>,category: String, onItemClick: (Items) ->
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
-                    Text(category)
+                    Text("Garfield's - " +category)
                 }
             )
         }
@@ -174,14 +185,18 @@ fun ScrollContent(innerPadding: PaddingValues, dishList: List<Items>, onItemClic
                             builder = {
                                 crossfade(true) // Enable crossfade animation
                                 placeholder(R.drawable.comingsoon)
-                                dish.images.drop(1).forEach {
-                                    if (it.isNotEmpty()) {
+                                if (dish.images.size > 1) {    //
+                                    dish.images.drop(1).forEach {
                                         data(it)
-                                        return@forEach
                                     }
-                                }// Placeholder drawable while loading
-                                error(R.drawable.comingsoon)
 
+                                }
+                                //s'il y a une erreur drop la première image et prend la deuxième
+                                error(R.drawable.comingsoon)
+                                Log.d(
+                                    "TEST",
+                                    "Taille de la liste d'images: ${dish.images.size}"
+                                )
                             }
                         ),
                         contentDescription = "Dish Image", // Content description for accessibility
@@ -190,7 +205,7 @@ fun ScrollContent(innerPadding: PaddingValues, dishList: List<Items>, onItemClic
                             .padding(vertical = 4.dp) // Adjust the size and padding
                     )
                     Text(
-                        text = (dish.prices.firstOrNull()?.price + "$") ?: "Price not available", // Utilize the dish price
+                        text = (dish.prices.firstOrNull()?.price + "$") ?: "Price not available",
                         color = Color.Black,
                         modifier = Modifier
                             .padding(bottom = 4.dp)

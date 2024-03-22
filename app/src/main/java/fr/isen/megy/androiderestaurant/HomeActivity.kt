@@ -89,7 +89,7 @@ fun SmallTopAppBarExample(onCategoryClick: (String) -> Unit) {
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
-                    Text("Chat Restaurant")
+                    Text("Garfield's")
                 }
             )
         },
@@ -132,7 +132,7 @@ fun ScrollContent(innerPadding: PaddingValues, onCategoryClick: (String) -> Unit
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                     Text(
-                        text = "ChatRestaurant",
+                        text = "Garfield's",
                         style = TextStyle(color = Color.DarkGray, fontSize = 24.sp), // Augmente la taille du texte
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
