@@ -173,9 +173,11 @@ fun ScrollContent(innerPadding: PaddingValues, dishList: List<Items>, onItemClic
                     ) {
                         Text(
                             text = dish.nameFr ?: "No name",
+                            style = TextStyle(fontSize = 24.sp),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth(),
                             color = Color.Black
+
                         )
                     }
                     Image(
@@ -202,11 +204,13 @@ fun ScrollContent(innerPadding: PaddingValues, dishList: List<Items>, onItemClic
                         contentDescription = "Dish Image", // Content description for accessibility
                         modifier = Modifier
                             .fillMaxWidth()
+                            .size(200.dp) // Adjust the size of the image
                             .padding(vertical = 4.dp) // Adjust the size and padding
                     )
                     Text(
                         text = (dish.prices.firstOrNull()?.price + "$") ?: "Price not available",
                         color = Color.Black,
+                        style = TextStyle(fontSize = 20.sp),
                         modifier = Modifier
                             .padding(bottom = 4.dp)
                             .fillMaxWidth()
@@ -225,6 +229,6 @@ fun TextButton(text: String, onClick: () -> Unit) {
         onClick = onClick, // Utilisez simplement la fonction onClick fournie
         modifier = Modifier.padding(vertical = 8.dp)
     ) {
-        Text(text = text, style = TextStyle(color = Color.Black))
+        Text(text = text, style = TextStyle(color = Color.Black), fontSize = 30.sp)
     }
 }

@@ -119,7 +119,8 @@ fun ScrollContent(innerPadding: PaddingValues, onCategoryClick: (String) -> Unit
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
-                    modifier = Modifier.padding(end = 16.dp)
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp)
+
                 ) {
                     Text(
                         text = "Bienvenue",
@@ -128,19 +129,20 @@ fun ScrollContent(innerPadding: PaddingValues, onCategoryClick: (String) -> Unit
                     )
                     Text(
                         text = "chez",
-                        style = TextStyle(color = Color.DarkGray, fontSize = 24.sp), // Augmente la taille du texte
+                        style = TextStyle(color = Color.DarkGray, fontSize = 20.sp), // Augmente la taille du texte
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                     Text(
                         text = "Garfield's",
-                        style = TextStyle(color = Color.DarkGray, fontSize = 24.sp), // Augmente la taille du texte
+                        style = TextStyle(color = Color.DarkGray, fontSize = 30.sp), // Augmente la taille du texte
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
                 Image(
                     painter = painterResource(id = R.drawable.chat),
                     contentDescription = null,
-                    modifier = Modifier.size(96.dp)
+                    modifier = Modifier.fillMaxWidth()
+
                 )
             }
         }
@@ -169,8 +171,10 @@ fun TextButtonExample(text: String, onClick: () -> Unit) {
     TextButton(
         onClick = onClick, // Utilisez simplement la fonction onClick fournie
         modifier = Modifier.padding(vertical = 8.dp)
+
     ) {
-        Text(text = text, style = TextStyle(color = Color.Black))
+        Text(text = text, style = TextStyle(color = Color.Black),fontSize = 40.sp)
+
     }
 }
 
