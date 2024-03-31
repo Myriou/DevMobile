@@ -204,18 +204,37 @@ fun DishDetails(innerPadding: PaddingValues, dish: Items, context: Context) {
 const val CART_FILE_NAME = "panier.json"
 
 fun addToCart(name: String, quantity: Int, totalPrice: Float, context: Context) {
-    val cartItem = CartItem(name, quantity, totalPrice)
-    val cartItemList = loadCartItems(context) // Charger la liste actuelle du panier
-    cartItemList.add(cartItem)
-    saveCartItems(cartItemList, context) // Enregistrer la liste mise à jour du panier
-    // Compter le nombre total d'articles dans le panier
-    val itemCount = cartItemList.sumBy { it.quantity }
+    val cartItemList = loadCartItems(context) // Load current cart items
 
-    // Mettre à jour le nombre d'articles dans les préférences utilisateur
+    // Check if the dish already exists in the cart
+    val existingItem = cartItemList.find { it.dishName == name }
+    if (existingItem != null) {
+        // If the dish exists, add the existing quantity and total price to the new quantity and price
+        val newQuantity = existingItem.quantity + quantity
+        val newTotalPrice = existingItem.totalPrice + totalPrice
+        // Remove the existing item from the cart
+        cartItemList.remove(existingItem)
+        // Add a new item to the cart with the combined quantity and price
+        val cartItem = CartItem(name, newQuantity, newTotalPrice)
+        cartItemList.add(cartItem)
+    } else {
+        // If the dish doesn't exist, add it to the cart
+        val cartItem = CartItem(name, quantity, totalPrice)
+        cartItemList.add(cartItem)
+    }
+
+    // Save the updated cart items
+    saveCartItems(cartItemList, context)
+
+    // Update the total item count in preferences
+    val itemCount = cartItemList.sumBy { it.quantity }
     updateCartItemCount(context, itemCount)
 
     Log.d("SaveCartItems", "addToCart: Item count updated to $itemCount")
 }
+
+
+
 
 
 

@@ -181,7 +181,7 @@ fun CartItemRow(
             }
         ) {
             Image(
-                painter = painterResource(id = R.drawable.chat),
+                painter = painterResource(id = R.drawable.poubelle),
                 contentDescription = "Supprimer"
             )
         }
