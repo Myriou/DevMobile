@@ -1,22 +1,30 @@
 package fr.isen.megy.androiderestaurant
 
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,6 +38,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,11 +49,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.isen.megy.androiderestaurant.ui.theme.AndroidERestaurantTheme
+import kotlinx.coroutines.delay
+
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             AndroidERestaurantTheme {
+                AutoUpdate(this)
                 // A surface container using the 'background' color from the theme
                 SmallTopAppBarExample(this) { category ->
                     if (category == "Plats" || category == "Entrées" || category == "Desserts") {
@@ -95,15 +107,13 @@ fun SmallTopAppBarExample(context : Context,onCategoryClick: (String) -> Unit) {
                     Text("Garfield's")
                 },
                 actions = {
-                    IconButton(onClick = {
-                        // Rediriger l'utilisateur vers l'écran du panier
-                        context.startActivity(Intent(context, CartActivity::class.java))
-                    }) {
-                        Image(
-                            painter = painterResource(id = R.drawable.cart),
-                            contentDescription = "Panier"
-                        )
-                    }
+                    CartIconWithBadge(
+                        cartItemCount = getCartItemCount(context),
+                        onItemClick = {
+                            // Rediriger l'utilisateur vers l'écran du panier
+                            context.startActivity(Intent(context, CartActivity::class.java))
+                        }
+                    )
                 }
             )
         }
@@ -192,3 +202,12 @@ fun TextButtonExample(text: String, onClick: () -> Unit) {
     }
 }
 
+
+@Composable
+fun AutoUpdate(context: Context) {
+
+            val cartItems = loadCartItemsFromJson(context)
+            val itemCount = cartItems.sumBy { it.quantity }
+            updateCartItemCount(context, itemCount)
+
+}

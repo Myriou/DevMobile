@@ -10,6 +10,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +22,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -40,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -63,11 +69,17 @@ class DetailActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             AndroidERestaurantTheme {
+                AutoUpdate(this)
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val cartItems = loadCartItemsFromJson(this)
+                    val itemCount = cartItems.sumBy { it.quantity }
+
+                    // Mettre à jour le nombre d'articles dans les préférences utilisateur
+                    updateCartItemCount(this, itemCount)
                     val item : Items = intent.getSerializableExtra("DISH") as Items
 
                     // Utiliser la fonction composable pour créer la barre d'applications
@@ -96,26 +108,29 @@ fun DishScreen(dish: Items, context: Context) {
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
-                    Text(("Garfield's - " + (dish.nameFr)) ?: "Dish")
+                    Text(("Garfield's - " + (dish.nameFr)) ?: "Dish",
+                        modifier = Modifier.clickable {
+                            context.startActivity(Intent(context, HomeActivity::class.java))
+                        })
                 },
                 actions = {
-                    IconButton(onClick = {
-                        // Rediriger l'utilisateur vers l'écran du panier
-                        context.startActivity(Intent(context, CartActivity::class.java))
-                    }) {
-                        Image(
-                            painter = painterResource(id = R.drawable.cart),
-                            contentDescription = "Panier"
-                        )
-                    }
+                    CartIconWithBadge(
+                        cartItemCount = getCartItemCount(context),
+                        onItemClick = {
+                            // Rediriger l'utilisateur vers l'écran du panier
+                            context.startActivity(Intent(context, CartActivity::class.java))
+                        }
+                    )
                 }
             )
         }
-    ) {
-            innerPadding ->
+    ) { innerPadding ->
         DishDetails(innerPadding, dish, context)
+
     }
-}
+    }
+
+
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -169,8 +184,11 @@ fun DishDetails(innerPadding: PaddingValues, dish: Items, context: Context) {
                     AlertDialog.Builder(context)
                     .setTitle("Plat ajouté au panier")
                     .setMessage("Le plat a été ajouté à votre panier.")
-                    .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                    .setPositiveButton("OK") { dialog, _ -> dialog.dismiss()
+                        context.startActivity(Intent(context, DetailActivity::class.java))}
                     .show()
+
+
                           },
                 modifier = Modifier.fillMaxWidth()
             )      {
@@ -199,13 +217,7 @@ fun addToCart(name: String, quantity: Int, totalPrice: Float, context: Context) 
     Log.d("SaveCartItems", "addToCart: Item count updated to $itemCount")
 }
 
-fun updateCartItemCount(context: Context, itemCount: Int) {
-    val sharedPreferences = context.getSharedPreferences("CartPrefs", Context.MODE_PRIVATE)
-    with(sharedPreferences.edit()) {
-        putInt("cartItemCount", itemCount)
-        apply()
-    }
-}
+
 
 
 
@@ -236,9 +248,18 @@ fun saveCartItems(cartItems: List<CartItem>, context: Context) {
     Log.d("SaveCartItems", "Liste des éléments du panier enregistrée avec succès: $json")
 }
 
+fun getCartItemCount(context: Context): Int {
+    val sharedPreferences = context.getSharedPreferences("CartPrefs", Context.MODE_PRIVATE)
+    return sharedPreferences.getInt("cartItemCount", 0)
+}
 
-
-
+fun updateCartItemCount(context: Context, itemCount: Int) {
+    val sharedPreferences = context.getSharedPreferences("CartPrefs", Context.MODE_PRIVATE)
+    with(sharedPreferences.edit()) {
+        putInt("cartItemCount", itemCount)
+        apply()
+    }
+}
 @Composable
 fun QuantitySelector(quantity: Int, onQuantityChange: (Int) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -286,6 +307,48 @@ fun Carousel (dish: Items){
         }
 
 
+    }
+}
+
+@Composable
+fun CartIconWithBadge(
+    cartItemCount: Int,
+    onItemClick: () -> Unit
+) {
+    Box(
+        contentAlignment = Alignment.Center
+    ) {
+        // Afficher l'icône du chariot
+        IconButton(
+            onClick = onItemClick
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.panier),
+                contentDescription = "Panier",
+                modifier = Modifier
+                    .size(50.dp)
+            )
+        }
+
+        // Afficher la pastille avec le nombre d'articles dans le panier
+        if (cartItemCount > 0) {
+            Box(
+                modifier = Modifier
+                    .offset(
+                        x = 12.dp,
+                        y = -12.dp
+                    ) // Déplacer la pastille vers le coin supérieur droit
+                    .size(25.dp)
+                    .background(color = Color.Red, shape = CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = cartItemCount.toString(),
+                    color = Color.White,
+                    fontSize = 12.sp
+                )
+            }
+        }
     }
 }
 

@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,9 +69,15 @@ class CategoryActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            AutoUpdate(this)
             val category = intent.getStringExtra("category") ?: ""
             fetchDishData(category)
             AndroidERestaurantTheme {
+                val cartItems = loadCartItemsFromJson(this)
+                val itemCount = cartItems.sumBy { it.quantity }
+
+                // Mettre à jour le nombre d'articles dans les préférences utilisateur
+                updateCartItemCount(this, itemCount)
                 // Utiliser la fonction composable pour créer la barre d'applications
                 CategoryScreen(this,mutableDataList, category) { dishName ->
                     navigateToDetailActivity(dishName)
@@ -146,24 +153,26 @@ fun CategoryScreen(context : Context, dishes: List<Items>, category: String, onI
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
-                    Text(("Garfield's - $category"))
+                    Text(("Garfield's - $category"),
+                        modifier = Modifier.clickable {
+                        context.startActivity(Intent(context, HomeActivity::class.java))
+                    })
                 },
                 actions = {
-                    IconButton(onClick = {
-                        // Rediriger l'utilisateur vers l'écran du panier
-                        context.startActivity(Intent(context, CartActivity::class.java))
-                    }) {
-                        Image(
-                            painter = painterResource(id = R.drawable.cart),
-                            contentDescription = "Panier"
-                        )
-                    }
+                    CartIconWithBadge(
+                        cartItemCount = getCartItemCount(context),
+                        onItemClick = {
+                            // Rediriger l'utilisateur vers l'écran du panier
+                            context.startActivity(Intent(context, CartActivity::class.java))
+                        }
+                    )
                 }
             )
         }
     ) {
             innerPadding ->
         ScrollContent(innerPadding,dishes, onItemClick )
+
 
 
     }
@@ -219,10 +228,12 @@ fun ScrollContent(innerPadding: PaddingValues, dishList: List<Items>, onItemClic
                         modifier = Modifier
                             .fillMaxWidth()
                             .size(200.dp) // Adjust the size of the image
-                            .padding(vertical = 4.dp) // Adjust the size and padding
+                            .padding(vertical = 4.dp)
+                            .clickable { onItemClick(dish) }// Adjust the size and padding
+
                     )
                     Text(
-                        text = (dish.prices.firstOrNull()?.price + "$") ?: "Price not available",
+                        text = (dish.prices.firstOrNull()?.price + "€") ?: "Price not available",
                         color = Color.Black,
                         style = TextStyle(fontSize = 20.sp),
                         modifier = Modifier
@@ -237,12 +248,3 @@ fun ScrollContent(innerPadding: PaddingValues, dishList: List<Items>, onItemClic
     }
 }
 
-@Composable
-fun TextButton(text: String, onClick: () -> Unit) {
-    TextButton(
-        onClick = onClick, // Utilisez simplement la fonction onClick fournie
-        modifier = Modifier.padding(vertical = 8.dp)
-    ) {
-        Text(text = text, style = TextStyle(color = Color.Black), fontSize = 30.sp)
-    }
-}
